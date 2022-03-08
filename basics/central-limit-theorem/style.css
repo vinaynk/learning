@@ -1,0 +1,27 @@
+
+#output-canvas {
+}
+
+
+#output-view {
+  position: fixed;
+  bottom: 0px;
+  width: 100%;
+  z-index: 10;
+  background-color: #fff;
+  box-shadow: 0px 0px 10px #888;
+}
+
+
+#input-view {
+  margin-bottom: 460px;
+}
+
+
+#banner {
+  /* border: 1px solid #000; */
+}
+
+canvas {
+  /* border: 1px solid #000; */
+}
