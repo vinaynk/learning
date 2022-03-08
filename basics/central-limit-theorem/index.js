@@ -1,7 +1,7 @@
 // dont read this code - vinay
 
 // output distribution
-let output = { x : [0], y : [1], clean : true, plot: null }
+let output = { x : [0], y : [1], g : [0], plot: null }
 let inputs = []
 
 
@@ -73,6 +73,53 @@ function xpand(x1, x2) {
 }
 
 
+function fixTicks(obj) {
+  let left  = obj.x[0]
+  let right = obj.x[obj.x.length-1]
+  let nticks = 32
+  let step = (right - left) / nticks
+  let scale = 1
+  while (step > 10) {
+    step = step / 10
+    scale = scale * 10
+  }
+  if (step < 1) {
+    step = 1
+  } else if (step < 2) {
+    step = 2
+  } else if (step < 5) {
+    step = 5
+  } else {
+    step = 10
+  }
+  step *= scale
+  // console.log(obj.plot.options.scales.xAxes[0].ticks.stepSize)
+  // obj.plot.options.scales.xAxes[0].ticks.stepSize = step
+  // console.log(obj.plot.options.scales)
+}
+
+
+function computeGaussian(x, y) {
+  let ex  = 0
+  let ex2 = 0
+  for (let i = 0; i < x.length; i++) {
+    ex  += x[i] * y[i]
+    ex2 += x[i] * y[i] * x[i]
+  }
+  let variance = ex2 - ex * ex
+  let std = Math.sqrt(variance)
+
+  let g = []
+  let c = 1 / std / Math.sqrt(2 * Math.PI)
+  for (let i = 0; i < x.length; i++) {
+    let norm = (x[i] - ex) / std
+    val = Math.exp(-0.5 * norm * norm) * c
+    g.push(val)
+  }
+  return g
+}
+
+
 function mixDist(idx) {
   let x1 = output.x
   let y1 = output.y
@@ -83,10 +130,12 @@ function mixDist(idx) {
   let xop = xpand(x1, x2)
   let yop = convolve(y1, y2)
   _normalize(yop)
+  let gop = computeGaussian(xop, yop)
 
   _clearArray(output.x).push(...xop)
   _clearArray(output.y).push(...yop)
-  output.clean = false
+  _clearArray(output.g).push(...gop)
+  // fixTicks(output)
   output.plot.update()
 }
 
@@ -94,7 +143,7 @@ function mixDist(idx) {
 function resetOutput() {
   _clearArray(output.x).push(0)
   _clearArray(output.y).push(1)
-  output.clean = true
+  _clearArray(output.g).push(0)
   output.plot.update()
 }
 
@@ -102,6 +151,15 @@ function resetOutput() {
 function createChart(elem, data, cfg={}) {
   cfg = Object.assign({ ratio : 0.3, color : '#333' }, cfg)
   EID(elem).height = Math.round(window.innerHeight * cfg.ratio)
+  let extra = []
+  if (data.g != null) {
+    extra.push({
+      lineTension: 0,
+      data: data.g,
+      borderColor: '#999',
+      fill: false
+    })
+  }
   let ret = new Chart(elem, {
     type: "line",
     data: {
@@ -111,7 +169,7 @@ function createChart(elem, data, cfg={}) {
         data: data.y,
         borderColor: cfg.color,
         fill: false
-      }]
+      }, ...extra]
     },
     options: {
       legend: {display: false},
@@ -121,6 +179,11 @@ function createChart(elem, data, cfg={}) {
         yAxes: [{
           ticks: { suggestedMin: 0 }
         }]
+      },
+      elements: {
+        point: {
+          radius: 0
+        }
       }
     }
   })
@@ -254,34 +317,36 @@ function randomize7() {
 
 function initInputs() {
   let obj = uniformDist(10)
-  obj.plot = createChart('input-canvas-0', obj, { ratio: 0.2, color: '#24b' })
+  let clr = 'hsl(216, 98%, 52%)'
+  obj.plot = createChart('input-canvas-0', obj, { ratio: 0.2, color: clr })
   inputs.push(obj)
   obj = butterflyDist(10)
-  obj.plot = createChart('input-canvas-1', obj, { ratio: 0.2, color: '#24b' })
+  obj.plot = createChart('input-canvas-1', obj, { ratio: 0.2, color: clr })
   inputs.push(obj)
   obj = butterflyDist2(10)
-  obj.plot = createChart('input-canvas-2', obj, { ratio: 0.2, color: '#24b' })
+  obj.plot = createChart('input-canvas-2', obj, { ratio: 0.2, color: clr })
   inputs.push(obj)
   obj = rampDist(10)
-  obj.plot = createChart('input-canvas-3', obj, { ratio: 0.2, color: '#24b' })
+  obj.plot = createChart('input-canvas-3', obj, { ratio: 0.2, color: clr })
   inputs.push(obj)
   obj = twoBoxDist(10)
-  obj.plot = createChart('input-canvas-4', obj, { ratio: 0.2, color: '#24b' })
+  obj.plot = createChart('input-canvas-4', obj, { ratio: 0.2, color: clr })
   inputs.push(obj)
-  obj = teethDist(17)
-  obj.plot = createChart('input-canvas-5', obj, { ratio: 0.2, color: '#24b' })
+  obj = teethDist(12)
+  obj.plot = createChart('input-canvas-5', obj, { ratio: 0.2, color: clr })
   inputs.push(obj)
-  obj = randomDist1(15)
-  obj.plot = createChart('input-canvas-6', obj, { ratio: 0.2, color: '#24b' })
+  obj = randomDist1(12)
+  obj.plot = createChart('input-canvas-6', obj, { ratio: 0.2, color: clr })
   inputs.push(obj)
-  obj = randomDist2(20)
-  obj.plot = createChart('input-canvas-7', obj, { ratio: 0.2, color: '#24b' })
+  obj = randomDist2(12)
+  obj.plot = createChart('input-canvas-7', obj, { ratio: 0.2, color: clr })
   inputs.push(obj)
 }
 
 
 function initAll() {
-  output.plot = createChart('output-canvas', output, { ratio: 0.3, color: '#f72' })
+  output.plot = createChart('output-canvas', output, 
+                            { ratio: 0.3, color: 'hsl(0, 90%, 70%)' })
   initInputs()
 }
 
