@@ -25,3 +25,8 @@
 canvas {
   /* border: 1px solid #000; */
 }
+
+.btn:active {
+  background-color: #fff;
+  color: #00f;
+}

@@ -151,20 +151,26 @@ function resetOutput() {
 function createChart(elem, data, cfg={}) {
   cfg = Object.assign({ ratio : 0.3, color : '#333' }, cfg)
   EID(elem).height = Math.round(window.innerHeight * cfg.ratio)
-  let extra = []
+  let extra  = []
+  let legend = false
+  let label  = ''
   if (data.g != null) {
     extra.push({
       lineTension: 0,
       data: data.g,
       borderColor: '#999',
-      fill: false
+      fill: false,
+      label: 'Gaussian'
     })
+    legend = true
+    label  = 'Combined'
   }
   let ret = new Chart(elem, {
     type: "line",
     data: {
       labels: data.x,
       datasets: [{
+        label: label,
         lineTension: 0,
         data: data.y,
         borderColor: cfg.color,
@@ -172,7 +178,7 @@ function createChart(elem, data, cfg={}) {
       }, ...extra]
     },
     options: {
-      legend: {display: false},
+      legend: {display: legend},
       responsive: true,
       maintainAspectRatio: false,
       scales: {
@@ -345,8 +351,8 @@ function initInputs() {
 
 
 function initAll() {
-  output.plot = createChart('output-canvas', output, 
-                            { ratio: 0.3, color: 'hsl(0, 90%, 70%)' })
+  output.plot = createChart('output-canvas', output,
+                            { ratio: 0.35, color: 'hsl(0, 90%, 70%)' })
   initInputs()
 }
 
